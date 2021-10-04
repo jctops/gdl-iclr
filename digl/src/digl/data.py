@@ -13,7 +13,7 @@ from torch_geometric.utils import from_networkx, to_networkx
 
 from digl.seeds import development_seed
 
-DATA_PATH = '/boffice/ots/users/jtopping/digl/data'
+DATA_PATH = './digl/data'
 
 
 def get_dataset(name: str, use_lcc: bool = True) -> InMemoryDataset:
