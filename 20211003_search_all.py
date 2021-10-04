@@ -15,9 +15,9 @@ def get_parameters(dataset, preprocessing, output_dir, **kwargs):
         sherpa.Choice(name='device', range=['cuda']),
         sherpa.Discrete(name='hidden_layers', range=[1,2]), # [1,3]
         sherpa.Ordinal(name='hidden_units', range=[16,32,64,128]),
-        sherpa.Continous(name='dropout', range=[0.2,0.8]),
-        sherpa.Continous(name='lr', range=[0.005,0.05], scale='log'),
-        sherpa.Continous(name='weight_decay', range=[0.01,0.2], scale='log'),
+        sherpa.Continuous(name='dropout', range=[0.2,0.8]),
+        sherpa.Continuous(name='lr', range=[0.005,0.05], scale='log'),
+        sherpa.Continuous(name='weight_decay', range=[0.01,0.2], scale='log'),
     ]
     if (preprocessing == 'none') or (preprocessing == 'undirected'):
         pass
@@ -25,7 +25,7 @@ def get_parameters(dataset, preprocessing, output_dir, **kwargs):
         parameters += [
             sherpa.Continuous(name='alpha', range=[0.01, 0.12], scale='log'),
             sherpa.Ordinal(name='k', range=[16,32,64]),
-            sherpa.Continous(name='epsilon', range=[0.0001, 0.001], scale='log'),
+            sherpa.Continuous(name='epsilon', range=[0.0001, 0.001], scale='log'),
             sherpa.Choice(name='use_k', range=[True, False]),
         ]
     elif (preprocessing == 'sdrfct') or (preprocessing == 'sdrfcut'):
