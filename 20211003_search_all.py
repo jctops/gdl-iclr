@@ -57,35 +57,35 @@ def gen_experiments():
     t = 0
 
     # WebKB experiments
-    for dataset in ['Cornell', 'Wisconsin', 'Texas']:
-        for preprocessing in ['none', 'undirected', 'ppr', 'undirected_ppr']:
-            experiments.append(
-                Experiment(
-                    dataset,
-                    preprocessing,
-                    '20211003_search_experiment.py',
-                    num_development=0,
-                    hours=1,
-                    max_num_trials=40,
-                    sleep_t=t,
-                )
-            )
-            t += 15
-        for preprocessing in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
-            experiments.append(
-                Experiment(
-                    dataset,
-                    preprocessing,
-                    '20211003_search_experiment.py',
-                    tau_range=[50,200],
-                    max_steps_range=[10,1000],
-                    num_development=0,
-                    hours=1,
-                    max_num_trials=100,
-                    sleep_t=t,
-                )
-            )
-            t += 15
+    # for dataset in ['Cornell', 'Wisconsin', 'Texas']:
+    #     for preprocessing in ['none', 'undirected', 'ppr', 'undirected_ppr']:
+    #         experiments.append(
+    #             Experiment(
+    #                 dataset,
+    #                 preprocessing,
+    #                 '20211003_search_experiment.py',
+    #                 num_development=0,
+    #                 hours=1,
+    #                 max_num_trials=40,
+    #                 sleep_t=t,
+    #             )
+    #         )
+    #         t += 15
+    #     for preprocessing in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
+    #         experiments.append(
+    #             Experiment(
+    #                 dataset,
+    #                 preprocessing,
+    #                 '20211003_search_experiment.py',
+    #                 tau_range=[50,200],
+    #                 max_steps_range=[10,1000],
+    #                 num_development=0,
+    #                 hours=1,
+    #                 max_num_trials=100,
+    #                 sleep_t=t,
+    #             )
+    #         )
+    #         t += 15
 
     # DIGL experiments #1
     for dataset in ['Cora', 'Citeseer']:
@@ -222,17 +222,20 @@ def run_experiment(experiment, max_num_trials=100, max_concurrent=None):
     max_num_trials = experiment.max_num_trials
     if max_concurrent is None:
         max_concurrent = max_num_trials
-    output_dir = '/boffice/ots/users/jtopping/sherpa_final/'+experiment_name
+    output_dir = './sherpa_final/'+experiment_name
     parameters = get_parameters(experiment.dataset, experiment.preprocessing, output_dir, **experiment.kwargs)
     algorithm = sherpa.algorithms.RandomSearch(max_num_trials=max_num_trials)
-    scheduler = sherpa.schedulers.SGEScheduler(submit_options=f'-N {experiment_name} -l h_rt={experiment.kwargs["hours"]}:0:0,h_vmem=8G,estmem=8G,gpu_slots=1 -j y -S /bin/bash',
-        environment='/home/jtopping/.julia/conda/3/bin/activate && conda activate env_clr && module load cuda-10.1.243')
+    # scheduler = sherpa.schedulers.SGEScheduler(submit_options=f'-N {experiment_name} -l h_rt={experiment.kwargs["hours"]}:0:0,h_vmem=8G,estmem=8G,gpu_slots=1 -j y -S /bin/bash',
+    #     environment='/home/jtopping/.julia/conda/3/bin/activate && conda activate env_clr && module load cuda-10.1.243')
+    # todo need to make this a local scheduler
+    # so = f'-N {experiment_name} -l h_rt={experiment.kwargs["hours"]}:0:0,h_vmem=8G,estmem=8G,gpu_slots=1 -j y -S /bin/bash'
+    scheduler = sherpa.schedulers.LocalSchedular()
 
     results = sherpa.optimize(
         parameters=parameters,
         algorithm=algorithm,
         lower_is_better=False,
-        filename=f'/home/jtopping/dev/working/gbcbr/notebooks/{experiment.search_script}',
+        filename=f'./{experiment.search_script}',
         scheduler=scheduler,
         verbose=0,
         max_concurrent=max_concurrent,
@@ -266,7 +269,7 @@ with Pool(len(experiments)) as p:
 pkl.dump(
     results,
     open(
-        '/boffice/ots/users/jtopping/sherpa_final/results_1.pkl',
+        './results_1.pkl',
         'wb'
     )
 )
