@@ -69,7 +69,7 @@ def gen_experiments():
                     '20211003_search_experiment.py',
                     num_development=0,
                     hours=1,
-                    max_num_trials=40,
+                    max_num_trials=5,
                     sleep_t=t,
                 )
             )
@@ -85,7 +85,7 @@ def gen_experiments():
                     max_steps_range=[10,1000],
                     num_development=0,
                     hours=1,
-                    max_num_trials=100,
+                    max_num_trials=5,
                     sleep_t=t,
                 )
             )
