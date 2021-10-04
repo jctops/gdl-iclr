@@ -269,8 +269,11 @@ def run_experiment(experiment, max_num_trials=100, max_concurrent=None):
 
     return experiment_name, test_acc_mean, test_acc_ci
 
-with Pool(len(experiments)) as p:
-    results = p.map(run_experiment, experiments)
+results = []
+for ex in experiments:
+    results.append(run_experiment(ex))
+# with Pool(len(experiments)) as p:
+#     results = p.map(run_experiment, experiments)
 pkl.dump(
     results,
     open(
