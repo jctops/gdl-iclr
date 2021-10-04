@@ -53,6 +53,7 @@ class Experiment:
         self.kwargs = kwargs
 
 def gen_experiments():
+    print('generating experiments')
     experiments = []
     t = 0
 
@@ -210,6 +211,7 @@ def gen_experiments():
                 )
             )
             t += 15
+    print('generated {len(experiments)} experiments')
 
     return experiments
 
