@@ -60,7 +60,8 @@ def gen_experiments():
     # WebKB experiments
     # for dataset in ['Cornell', 'Wisconsin', 'Texas']:
     for dataset in ['Wisconsin']:
-        for preprocessing in ['none', 'undirected', 'ppr', 'undirected_ppr']:
+        # for preprocessing in ['none', 'undirected', 'ppr', 'undirected_ppr']:
+        for preprocessing in ['none']:
             experiments.append(
                 Experiment(
                     dataset,
@@ -73,7 +74,8 @@ def gen_experiments():
                 )
             )
             t += 15
-        for preprocessing in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
+        # for preprocessing in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
+        for preprocessing in ['sdrfct']:
             experiments.append(
                 Experiment(
                     dataset,
@@ -233,7 +235,7 @@ def run_experiment(experiment, max_num_trials=100, max_concurrent=None):
     #     environment='/home/jtopping/.julia/conda/3/bin/activate && conda activate env_clr && module load cuda-10.1.243')
     # todo need to make this a local scheduler
     # so = f'-N {experiment_name} -l h_rt={experiment.kwargs["hours"]}:0:0,h_vmem=8G,estmem=8G,gpu_slots=1 -j y -S /bin/bash'
-    scheduler = sherpa.schedulers.LocalSchedular()
+    scheduler = sherpa.schedulers.LocalScheduler()
 
     results = sherpa.optimize(
         parameters=parameters,
