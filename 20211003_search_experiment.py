@@ -7,7 +7,7 @@ import numpy as np
 import seaborn as sns
 import torch.nn.functional as F
 
-from tqdm.notebook import tqdm
+# from tqdm.notebook import tqdm
 from torch.optim import Adam, Optimizer
 from collections import defaultdict
 from torch_geometric.data import Data, InMemoryDataset
@@ -116,8 +116,7 @@ def run(dataset: InMemoryDataset,
 
     best_dict = defaultdict(list)
 
-    cnt = 0
-    for seed in tqdm(seeds):
+    for seed in seeds:
         if num_development > 0:
             dataset.data = set_train_val_test_split(
                 seed,
