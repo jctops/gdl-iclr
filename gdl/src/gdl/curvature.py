@@ -59,7 +59,7 @@ def ricci(A, C=None):
     return C
 
 
-@cuda.jit('void(float32[:,:], float32[:,:], float32, float32, int32, float32[:,:], int32, int32, int32[:], int32, int32)')
+@cuda.jit('void(float32[:,:], float32[:,:], float32, float32, int32, float32[:,:], int32, int32, int32[:], int32[:], int32, int32)')
 def ricci_post_delta_cuda(A, A2, d_in_x, d_out_y, N, D, x, y, i_neighbors, j_neighbors, dim_i, dim_j):
     I,J = cuda.grid(2)
 
