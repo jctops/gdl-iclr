@@ -495,7 +495,7 @@ class UndirectedPPRDataset(InMemoryDataset):
         self.k = k
         self.eps = eps
 
-        super(PPRDataset, self).__init__(DATA_PATH)
+        super(UndirectedPPRDataset, self).__init__(DATA_PATH)
         self.data, self.slices = torch.load(self.processed_paths[0])
 
     @property
