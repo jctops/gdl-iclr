@@ -14,7 +14,7 @@ def get_parameters(dataset, preprocessing, output_dir, **kwargs):
         sherpa.Choice(name='num_development', range=[kwargs['num_development']]),
         # sherpa.Choice(name='device', range=['cuda']),
         #todo change this to be an arg
-        sherpa.Discrete(name='device', range=[1, 17]),
+        sherpa.Discrete(name='device', range=[0, 16]),
         sherpa.Discrete(name='hidden_layers', range=[1,4]), # [1,3]
         sherpa.Ordinal(name='hidden_units', range=[16,32,64,128]),
         sherpa.Continuous(name='dropout', range=[0.2,0.8]),
@@ -27,7 +27,7 @@ def get_parameters(dataset, preprocessing, output_dir, **kwargs):
         parameters += [
             sherpa.Continuous(name='alpha', range=[0.01, 0.12], scale='log'),
             sherpa.Ordinal(name='k', range=[16,32,64]),
-            sherpa.Continuous(name='epsilon', range=[0.0001, 0.001], scale='log'),
+            sherpa.Continuous(name='eps', range=[0.0001, 0.001], scale='log'),
             sherpa.Choice(name='use_k', range=[True, False]),
         ]
     elif (preprocessing == 'sdrfct') or (preprocessing == 'sdrfcut'):
