@@ -12,7 +12,8 @@ def get_parameters(dataset, preprocessing, output_dir, **kwargs):
         sherpa.Choice(name='preprocessing', range=[(preprocessing if not preprocessing.startswith('sdrfc') else 'sdrfc') if not preprocessing.startswith('sdrfcu') else 'sdrfcu']),
         sherpa.Choice(name='output_dir', range=[output_dir]),
         sherpa.Choice(name='num_development', range=[kwargs['num_development']]),
-        sherpa.Choice(name='device', range=['cuda']),
+        # sherpa.Choice(name='device', range=['cuda']),
+        sherpa.Discrete(name='device', range=[1, 17]),
         sherpa.Discrete(name='hidden_layers', range=[1,2]), # [1,3]
         sherpa.Ordinal(name='hidden_units', range=[16,32,64,128]),
         sherpa.Continuous(name='dropout', range=[0.2,0.8]),

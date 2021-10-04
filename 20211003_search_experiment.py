@@ -23,7 +23,8 @@ trial = client.get_trial()
 
 DATASET = trial.parameters['dataset']
 USE_LCC = True
-DEVICE = trial.parameters['device']
+# DEVICE = trial.parameters['device']
+DEVICE = f"cuda:{trial.parameters['device']}"
 PREPROCESSING = trial.parameters['preprocessing']
 
 if PREPROCESSING == 'none':
