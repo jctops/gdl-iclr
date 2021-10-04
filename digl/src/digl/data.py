@@ -24,9 +24,9 @@ def get_dataset(name: str, use_lcc: bool = True) -> InMemoryDataset:
         dataset = Amazon(path, name)
     elif name == 'CoauthorCS':
         dataset = Coauthor(path, 'CS')
-    if name in ['Cornell', 'Texas', 'Wisconsin']:
+    elif name in ['Cornell', 'Texas', 'Wisconsin']:
         dataset = WebKB(path, name)
-    if name in ['Chameleon', 'Squirrel']:
+    elif name in ['Chameleon', 'Squirrel']:
         dataset = WikipediaNetwork(path, name, geom_gcn_process=True)
     elif name == 'Actor':
         dataset = Actor(path, 'Actor')
