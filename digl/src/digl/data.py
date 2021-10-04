@@ -477,7 +477,7 @@ class UndirectedDataset(InMemoryDataset):
         return f'{self.name}_undirected'
 
 
-class PPRDataset(InMemoryDataset):
+class UndirectedPPRDataset(InMemoryDataset):
     """
     Dataset preprocessed with GDC using PPR diffusion.
     Note that this implementations is not scalable
