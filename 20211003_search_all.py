@@ -59,13 +59,45 @@ def gen_experiments():
 
     # WebKB experiments
     # for dataset in ['Cornell', 'Wisconsin', 'Texas']:
+    for dataset in ['Wisconsin']:
+        for preprocessing in ['none', 'undirected', 'ppr', 'undirected_ppr']:
+            experiments.append(
+                Experiment(
+                    dataset,
+                    preprocessing,
+                    '20211003_search_experiment.py',
+                    num_development=0,
+                    hours=1,
+                    max_num_trials=40,
+                    sleep_t=t,
+                )
+            )
+            t += 15
+        for preprocessing in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
+            experiments.append(
+                Experiment(
+                    dataset,
+                    preprocessing,
+                    '20211003_search_experiment.py',
+                    tau_range=[50,200],
+                    max_steps_range=[10,1000],
+                    num_development=0,
+                    hours=1,
+                    max_num_trials=100,
+                    sleep_t=t,
+                )
+            )
+            t += 15
+
+    # DIGL experiments #1
+    # for dataset in ['Cora', 'Citeseer']:
     #     for preprocessing in ['none', 'undirected', 'ppr', 'undirected_ppr']:
     #         experiments.append(
     #             Experiment(
     #                 dataset,
     #                 preprocessing,
     #                 '20211003_search_experiment.py',
-    #                 num_development=0,
+    #                 num_development=1500,
     #                 hours=1,
     #                 max_num_trials=40,
     #                 sleep_t=t,
@@ -78,140 +110,109 @@ def gen_experiments():
     #                 dataset,
     #                 preprocessing,
     #                 '20211003_search_experiment.py',
-    #                 tau_range=[50,200],
-    #                 max_steps_range=[10,1000],
-    #                 num_development=0,
-    #                 hours=1,
+    #                 tau_range=[50,400],
+    #                 max_steps_range=[300,3000],
+    #                 num_development=1500,
+    #                 hours=2,
     #                 max_num_trials=100,
     #                 sleep_t=t,
     #             )
     #         )
     #         t += 15
-
-    # DIGL experiments #1
-    for dataset in ['Cora', 'Citeseer']:
-        for preprocessing in ['none', 'undirected', 'ppr', 'undirected_ppr']:
-            experiments.append(
-                Experiment(
-                    dataset,
-                    preprocessing,
-                    '20211003_search_experiment.py',
-                    num_development=1500,
-                    hours=1,
-                    max_num_trials=40,
-                    sleep_t=t,
-                )
-            )
-            t += 15
-        for preprocessing in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
-            experiments.append(
-                Experiment(
-                    dataset,
-                    preprocessing,
-                    '20211003_search_experiment.py',
-                    tau_range=[50,400],
-                    max_steps_range=[300,3000],
-                    num_development=1500,
-                    hours=2,
-                    max_num_trials=100,
-                    sleep_t=t,
-                )
-            )
-            t += 15
-
-    # DIGL experiments #2
-    for dataset in ['Pubmed']:
-        for preprocessing in ['none', 'undirected', 'ppr', 'undirected_ppr']:
-            experiments.append(
-                Experiment(
-                    dataset,
-                    preprocessing,
-                    '20211003_search_experiment.py',
-                    num_development=1500,
-                    hours=1,
-                    max_num_trials=40,
-                    sleep_t=t,
-                )
-            )
-            t += 15
-        for preprocessing in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
-            experiments.append(
-                Experiment(
-                    dataset,
-                    preprocessing,
-                    '20211003_search_experiment.py',
-                    tau_range=[50,400],
-                    max_steps_range=[300,3000],
-                    num_development=1500,
-                    hours=3,
-                    max_num_trials=100,
-                    sleep_t=t,
-                )
-            )
-            t += 15
-
-    # Wikipedia experiments #1
-    for dataset in ['Chameleon']:
-        for preprocessing in ['none', 'undirected', 'ppr', 'undirected_ppr']:
-            experiments.append(
-                Experiment(
-                    dataset,
-                    preprocessing,
-                    '20211003_search_experiment.py',
-                    num_development=600,
-                    hours=1,
-                    max_num_trials=40,
-                    sleep_t=t,
-                )
-            )
-            t += 15
-        for preprocessing in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
-            experiments.append(
-                Experiment(
-                    dataset,
-                    preprocessing,
-                    '20211003_search_experiment.py',
-                    tau_range=[30,400],
-                    max_steps_range=[200,2500],
-                    num_development=600,
-                    hours=2,
-                    max_num_trials=100,
-                    sleep_t=t,
-                )
-            )
-            t += 15
-
-    # Wikipedia experiments #2
-    for dataset in ['Squirrel', 'Actor']:
-        for preprocessing in ['none', 'undirected', 'ppr', 'undirected_ppr']:
-            experiments.append(
-                Experiment(
-                    dataset,
-                    preprocessing,
-                    '20211003_search_experiment.py',
-                    num_development=1500,
-                    hours=1,
-                    max_num_trials=40,
-                    sleep_t=t,
-                )
-            )
-            t += 15
-        for preprocessing in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
-            experiments.append(
-                Experiment(
-                    dataset,
-                    preprocessing,
-                    '20211003_search_experiment.py',
-                    tau_range=[50,400],
-                    max_steps_range=[200,3000],
-                    num_development=1500,
-                    hours=3,
-                    max_num_trials=100,
-                    sleep_t=t,
-                )
-            )
-            t += 15
-    print('generated {len(experiments)} experiments')
+    #
+    # # DIGL experiments #2
+    # for dataset in ['Pubmed']:
+    #     for preprocessing in ['none', 'undirected', 'ppr', 'undirected_ppr']:
+    #         experiments.append(
+    #             Experiment(
+    #                 dataset,
+    #                 preprocessing,
+    #                 '20211003_search_experiment.py',
+    #                 num_development=1500,
+    #                 hours=1,
+    #                 max_num_trials=40,
+    #                 sleep_t=t,
+    #             )
+    #         )
+    #         t += 15
+    #     for preprocessing in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
+    #         experiments.append(
+    #             Experiment(
+    #                 dataset,
+    #                 preprocessing,
+    #                 '20211003_search_experiment.py',
+    #                 tau_range=[50,400],
+    #                 max_steps_range=[300,3000],
+    #                 num_development=1500,
+    #                 hours=3,
+    #                 max_num_trials=100,
+    #                 sleep_t=t,
+    #             )
+    #         )
+    #         t += 15
+    #
+    # # Wikipedia experiments #1
+    # for dataset in ['Chameleon']:
+    #     for preprocessing in ['none', 'undirected', 'ppr', 'undirected_ppr']:
+    #         experiments.append(
+    #             Experiment(
+    #                 dataset,
+    #                 preprocessing,
+    #                 '20211003_search_experiment.py',
+    #                 num_development=600,
+    #                 hours=1,
+    #                 max_num_trials=40,
+    #                 sleep_t=t,
+    #             )
+    #         )
+    #         t += 15
+    #     for preprocessing in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
+    #         experiments.append(
+    #             Experiment(
+    #                 dataset,
+    #                 preprocessing,
+    #                 '20211003_search_experiment.py',
+    #                 tau_range=[30,400],
+    #                 max_steps_range=[200,2500],
+    #                 num_development=600,
+    #                 hours=2,
+    #                 max_num_trials=100,
+    #                 sleep_t=t,
+    #             )
+    #         )
+    #         t += 15
+    #
+    # # Wikipedia experiments #2
+    # for dataset in ['Squirrel', 'Actor']:
+    #     for preprocessing in ['none', 'undirected', 'ppr', 'undirected_ppr']:
+    #         experiments.append(
+    #             Experiment(
+    #                 dataset,
+    #                 preprocessing,
+    #                 '20211003_search_experiment.py',
+    #                 num_development=1500,
+    #                 hours=1,
+    #                 max_num_trials=40,
+    #                 sleep_t=t,
+    #             )
+    #         )
+    #         t += 15
+    #     for preprocessing in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
+    #         experiments.append(
+    #             Experiment(
+    #                 dataset,
+    #                 preprocessing,
+    #                 '20211003_search_experiment.py',
+    #                 tau_range=[50,400],
+    #                 max_steps_range=[200,3000],
+    #                 num_development=1500,
+    #                 hours=3,
+    #                 max_num_trials=100,
+    #                 sleep_t=t,
+    #             )
+    #         )
+    #         t += 15
+    print(f'generated {len(experiments)} experiments')
 
     return experiments
 
