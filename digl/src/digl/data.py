@@ -31,7 +31,7 @@ def get_dataset(name: str, use_lcc: bool = True) -> InMemoryDataset:
     elif name == 'Actor':
         dataset = Actor(path, 'Actor')
     else:
-        raise Exception('Unknown dataset.')
+        raise Exception(f'Unknown dataset: {name}')
 
     if use_lcc:
         lcc = get_largest_connected_component(dataset)
