@@ -27,7 +27,7 @@ def get_dataset(name: str, use_lcc: bool = True) -> InMemoryDataset:
     elif name in ['Cornell', 'Texas', 'Wisconsin']:
         dataset = WebKB(path, name)
     elif name in ['Chameleon', 'Squirrel']:
-        dataset = WikipediaNetwork(path, name, geom_gcn_process=False)
+        dataset = WikipediaNetwork(path, name, geom_gcn_process=True)
     elif name == 'Actor':
         dataset = Actor(path, 'Actor')
     else:
