@@ -393,7 +393,7 @@ class SDRFCDataset(InMemoryDataset):
         pass
 
     def process(self):
-        from gdl.sdrf_cuda import sdrf_w_cuda
+        from gdl.sdrf import sdrf_w_cuda
 
         base = get_dataset(name=self.name, use_lcc=self.use_lcc)
 
