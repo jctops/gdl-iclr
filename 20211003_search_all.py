@@ -219,6 +219,7 @@ experiments = gen_experiments()
 def run_experiment(experiment, max_num_trials=100, max_concurrent=None):
     time.sleep(experiment.sleep_t)
     experiment_name = experiment.dataset[:4]+'_'+experiment.preprocessing
+    print(f'running {experiment_name}')
     max_num_trials = experiment.max_num_trials
     if max_concurrent is None:
         max_concurrent = max_num_trials
