@@ -11,7 +11,7 @@ from torch_geometric.data import Data, InMemoryDataset
 from torch_geometric.datasets import Planetoid, Amazon, Coauthor, WebKB, WikipediaNetwork, Actor
 from torch_geometric.utils import from_networkx, to_networkx
 
-from digl.src.digl.seeds import development_seed
+from digl.seeds import development_seed
 
 DATA_PATH = '/boffice/ots/users/jtopping/digl/data'
 
@@ -393,7 +393,7 @@ class SDRFCDataset(InMemoryDataset):
         pass
 
     def process(self):
-        from gdl.src.gdl.sdrf import sdrf_w_cuda
+        from gdl.sdrf import sdrf_w_cuda
 
         base = get_dataset(name=self.name, use_lcc=self.use_lcc)
 
