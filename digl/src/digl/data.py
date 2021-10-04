@@ -54,7 +54,7 @@ def get_dataset(name: str, use_lcc: bool = True) -> InMemoryDataset:
         dataset.data = data
 
     mapping = dict(zip(np.unique(dataset.data.y), range(len(np.unique(dataset.data.y)))))
-    dataset.data.y = torch.Tensor([mapping[u] for u in np.array(dataset.data.y)])
+    dataset.data.y = torch.LongTensor([mapping[u] for u in np.array(dataset.data.y)])
 
     return dataset
 
