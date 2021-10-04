@@ -6,10 +6,6 @@ import seaborn as sns
 import sherpa
 import time
 
-from digl.data import get_dataset
-for dataset in ['Cornell', 'Texas', 'Wisconsin', 'Cora', 'Citeseer', 'Pubmed', 'Chameleon', 'Squirrel', 'Actor']:
-    get_dataset(dataset, use_lcc=False)
-
 def get_parameters(dataset, preprocessing, output_dir, **kwargs):
     parameters = [
         sherpa.Choice(name='dataset', range=[dataset]),
