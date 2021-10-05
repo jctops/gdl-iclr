@@ -12,6 +12,8 @@ import torch.nn.functional as F
 from torch.optim import Adam, Optimizer
 from torch_geometric.data import Data, InMemoryDataset
 import argparse
+from digl.seeds import val_seeds, test_seeds
+
 
 from functools import partial
 import os
@@ -125,40 +127,42 @@ def train_ray(opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25,
   print(f'options: {opt}')
   dataset = get_preprocessed_dataset(opt, data_dir)
   #todo change seeds and num development
-  dataset.data = set_train_val_test_split(1234, dataset.data, num_development=1500,).to(device)
-  model = GCN(
-    dataset,
-    hidden=opt['hidden_layers'] * [opt['hidden_units']],
-    dropout=opt['dropout']
-  ).to(device)
-  patience_counter = 0
-  tmp_dict = {'val_acc': 0}
-  best_dict = defaultdict(list)
-  optimizer = Adam(
-    [
-      {'params': model.non_reg_params, 'weight_decay': 0},
-      {'params': model.reg_params, 'weight_decay': opt['weight_decay']}
-    ], lr=opt['lr'])
+  n_reps = 2
+  for seed in enumerate(test_seeds[0:n_reps]):
+    dataset.data = set_train_val_test_split(seed, dataset.data, num_development=1500,).to(device)
+    model = GCN(
+      dataset,
+      hidden=opt['hidden_layers'] * [opt['hidden_units']],
+      dropout=opt['dropout']
+    ).to(device)
+    patience_counter = 0
+    tmp_dict = {'val_acc': 0}
+    best_dict = defaultdict(list)
+    optimizer = Adam(
+      [
+        {'params': model.non_reg_params, 'weight_decay': 0},
+        {'params': model.reg_params, 'weight_decay': opt['weight_decay']}
+      ], lr=opt['lr'])
 
-  for epoch in range(1, opt['epoch'] + 1):
-    if patience_counter == patience:
-      break
+    for epoch in range(1, opt['epoch'] + 1):
+      if patience_counter == patience:
+        break
 
-    loss = train(model, optimizer, dataset.data)
-    eval_dict = evaluate(model, dataset.data, test)
+      loss = train(model, optimizer, dataset.data)
+      eval_dict = evaluate(model, dataset.data, test)
 
-    if eval_dict['val_acc'] < tmp_dict['val_acc']:
-      patience_counter += 1
-    else:
-      patience_counter = 0
-      tmp_dict['epoch'] = epoch
-      for k, v in eval_dict.items():
-        tmp_dict[k] = v
+      if eval_dict['val_acc'] < tmp_dict['val_acc']:
+        patience_counter += 1
+      else:
+        patience_counter = 0
+        tmp_dict['epoch'] = epoch
+        for k, v in eval_dict.items():
+          tmp_dict[k] = v
 
-  for k, v in tmp_dict.items():
-    best_dict[k].append(v)
+    for k, v in tmp_dict.items():
+      best_dict[k].append(v)
 
-  tune.report(loss=loss, accuracy=np.mean(best_dict['val_acc']))
+  tune.report(loss=loss, accuracy=np.mean(best_dict['val_acc']), test_scc=np.mean(best_dict['test_acc']))
 
 
 def main(opt):
@@ -180,7 +184,7 @@ def main(opt):
       reduction_factor=opt["reduction_factor"],
     )
     reporter = CLIReporter(
-      metric_columns=["accuracy"]
+      metric_columns=["accuracy", "test_acc"]
     )
     # choose a search algorithm from https://docs.ray.io/en/latest/tune/api_docs/suggestion.html
     search_alg = None
