@@ -102,7 +102,7 @@ def set_search_space(opt):
   opt['hidden_units'] = tune.sample_from(lambda _: 2 ** np.random.randint(6, 9))
   opt['dropout'] = 0.5
   opt['lr'] = tune.loguniform(0.005, 0.03)
-  opt['weight_decay'] = tune.loguniform(0.001, 0.1)
+  opt['weight_decay'] = tune.loguniform(0.0001, 0.05)
   if opt['preprocessing'] in ['none', 'undirected']:
     pass
   elif opt['preprocessing'] in ['ppr', 'undirected_ppr']:
@@ -112,8 +112,8 @@ def set_search_space(opt):
     opt['use_k'] = tune.choice([True, False])
 
   elif opt['preprocessing'] in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
-    opt['tau'] = tune.loguniform(250, 500)
-    opt['max_steps'] = tune.choice([500, 1000, 2000])
+    opt['tau'] = tune.loguniform(250, 600)
+    opt['max_steps'] = tune.choice([500, 1000])
     opt['remove_edges'] = True
 
   if opt['preprocessing'] in ['sdrfcf', 'sdrfcuf']:
@@ -204,7 +204,7 @@ def main(opt):
   opt['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
   # todo replace
   # for method in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
-  for method in ['sdrfcf', 'sdrfcuf']:
+  for method in ['sdrfcf']:
   # for method in ['sdrfct']:
     opt['preprocessing'] = method
     opt = set_search_space(opt)
