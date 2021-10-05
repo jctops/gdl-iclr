@@ -100,7 +100,7 @@ def set_search_space(opt):
   opt['num_development'] = 1500
   opt['hidden_layers'] = tune.choice([1, 2])  # [1,3]
   opt['hidden_units'] = tune.sample_from(lambda _: 2 ** np.random.randint(4, 8))
-  opt['dropout'] = tune.uniform(0.2, 0.8)
+  opt['dropout'] = 0.5
   opt['lr'] = tune.loguniform(0.005, 0.03)
   opt['weight_decay'] = tune.loguniform(0.01, 0.1)
 
@@ -211,7 +211,7 @@ def main(opt):
     opt['preprocessing'] = method
     opt = set_search_space(opt)
     # todo remove after debugging
-    opt['max_steps'] = 1000
+    opt['max_steps'] = 10
     scheduler = ASHAScheduler(
       metric='accuracy',
       mode="max",
