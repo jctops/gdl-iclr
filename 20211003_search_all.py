@@ -101,7 +101,7 @@ def gen_experiments():
                     '20211003_search_experiment.py',
                     num_development=1500,
                     hours=1,
-                    max_num_trials=40,
+                    max_num_trials=5,
                     sleep_t=t,
                 )
             )
@@ -112,11 +112,11 @@ def gen_experiments():
                     dataset,
                     preprocessing,
                     '20211003_search_experiment.py',
-                    tau_range=[50,400],
-                    max_steps_range=[300,3000],
+                    tau_range=[200,400],
+                    max_steps_range=[1000,3000],
                     num_development=1500,
                     hours=2,
-                    max_num_trials=100,
+                    max_num_trials=10,
                     sleep_t=t,
                 )
             )
