@@ -160,7 +160,7 @@ def train_ray(opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25,
     for k, v in tmp_dict.items():
       best_dict[k].append(v)
 
-  print(f'best_dict: {}')
+  print(f'best_dict: {best_dict}')
   test_accs = best_dict['test_acc']
   boots_series = sns.algorithms.bootstrap(test_accs, func=np.mean, n_boot=1000)
   test_acc_mean = np.mean(test_accs)
