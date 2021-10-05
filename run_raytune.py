@@ -130,7 +130,6 @@ def get_test_results(models, datas):
 
 def train_ray(opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25, test=True):
   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-  print(f'options: {opt}')
   dataset = get_preprocessed_dataset(opt, data_dir)
   #todo change seeds and num development and n_reps
 
@@ -154,10 +153,10 @@ def train_ray(opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25,
       model_state, optimizer_state = torch.load(checkpoint)
       model.load_state_dict(model_state)
       optimizer.load_state_dict(optimizer_state)
-    patience_counter = 0
-
-    tmp_dict = {'val_acc': 0}
-    model.to(device).reset_parameters()
+    # patience_counter = 0
+    #
+    # tmp_dict = {'val_acc': 0}
+    # model.to(device).reset_parameters()
 
 
   for epoch in range(1, opt['epoch'] + 1):
@@ -178,7 +177,7 @@ def train_ray(opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25,
     boots_series = sns.algorithms.bootstrap(test_accs, func=np.mean, n_boot=1000)
     test_acc_mean = np.mean(test_accs)
     test_acc_ci = np.max(np.abs(sns.utils.ci(boots_series, 95) - test_acc_mean))
-    tune.report(loss=loss, accuracy=np.mean(best_dict['val_acc']), test_acc=np.mean(best_dict['test_acc']),
+    tune.report(loss=loss, accuracy=np.mean(val_accs), test_acc=test_acc_mean,
                 conf_int=test_acc_ci)
 
   #   if eval_dict['val_acc'] < tmp_dict['val_acc']:
