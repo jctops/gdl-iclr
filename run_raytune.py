@@ -161,8 +161,8 @@ def train_ray(opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25,
 
 
   for epoch in range(1, opt['epoch'] + 1):
-    if patience_counter == patience:
-      break
+    # if patience_counter == patience:
+    #   break
 
     # loss = train(model, optimizer, dataset.data)
     loss = np.mean([train(model, optimizer, data) for model, optimizer, data in zip(models, optimizers, datas)])
