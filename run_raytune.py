@@ -127,17 +127,15 @@ def train_ray(opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25,
   print(f'options: {opt}')
   dataset = get_preprocessed_dataset(opt, data_dir)
   #todo change seeds and num development
+  model = GCN(dataset, hidden=opt['hidden_layers'] * [opt['hidden_units']], dropout=opt['dropout']).to(device)
   n_reps = 5
   for seed in enumerate(test_seeds[0:n_reps]):
     dataset.data = set_train_val_test_split(seed, dataset.data, num_development=1500,).to(device)
-    model = GCN(
-      dataset,
-      hidden=opt['hidden_layers'] * [opt['hidden_units']],
-      dropout=opt['dropout']
-    ).to(device)
+
     patience_counter = 0
     tmp_dict = {'val_acc': 0}
     best_dict = defaultdict(list)
+    model.to(device).reset_parameters()
     optimizer = Adam(
       [
         {'params': model.non_reg_params, 'weight_decay': 0},
@@ -162,6 +160,7 @@ def train_ray(opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25,
     for k, v in tmp_dict.items():
       best_dict[k].append(v)
 
+  print(f'best_dict: {}')
   test_accs = best_dict['test_acc']
   boots_series = sns.algorithms.bootstrap(test_accs, func=np.mean, n_boot=1000)
   test_acc_mean = np.mean(test_accs)
@@ -189,7 +188,7 @@ def main(opt):
       reduction_factor=opt["reduction_factor"],
     )
     reporter = CLIReporter(
-      metric_columns=["accuracy", "test_acc"]
+      metric_columns=["accuracy", "test_acc", "conf_int"]
     )
     # choose a search algorithm from https://docs.ray.io/en/latest/tune/api_docs/suggestion.html
     search_alg = None
