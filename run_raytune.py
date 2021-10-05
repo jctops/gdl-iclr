@@ -64,20 +64,23 @@ def get_optimizer(name, parameters, lr, weight_decay=0):
 
 def get_preprocessed_dataset(opt, data_dir):
   if opt['preprocessing'] == 'none':
-    dataset = get_dataset(name=opt['dataset'], use_lcc=opt['use_lcc'],data_dir=data_dir)
+    dataset = get_dataset(name=opt['dataset'], use_lcc=opt['use_lcc'], data_dir=data_dir)
   elif opt['preprocessing'] == 'undirected':
-    dataset = UndirectedDataset(name=opt['dataset'], use_lcc=opt['use_lcc'],)
+    dataset = UndirectedDataset(name=opt['dataset'], use_lcc=opt['use_lcc'], )
   elif opt['preprocessing'] == 'ppr':
-    dataset = PPRDataset(name=opt['dataset'], use_lcc=opt['use_lcc'], alpha=opt['alpha'], k=opt['k'] if opt['use_k'] else None,
-      eps=opt['eps'] if not opt['use_k'] else None,
-    )
+    dataset = PPRDataset(name=opt['dataset'], use_lcc=opt['use_lcc'], alpha=opt['alpha'],
+                         k=opt['k'] if opt['use_k'] else None,
+                         eps=opt['eps'] if not opt['use_k'] else None,
+                         )
   elif opt['preprocessing'] == 'undirected_ppr':
-    dataset = UndirectedPPRDataset(name=opt['dataset'], use_lcc=opt['use_lcc'], alpha=opt['alpha'], k=opt['k'] if opt['use_k'] else None,
-      eps=opt['eps'] if not opt['use_k'] else None,
-    )
+    dataset = UndirectedPPRDataset(name=opt['dataset'], use_lcc=opt['use_lcc'], alpha=opt['alpha'],
+                                   k=opt['k'] if opt['use_k'] else None,
+                                   eps=opt['eps'] if not opt['use_k'] else None,
+                                   )
   elif opt['preprocessing'] in ['sdrfct', 'sdrfcf']:
-    dataset = SDRFCDataset(name=opt['dataset'], use_lcc=opt['use_lcc'], max_steps=opt['max_steps'], remove_edges=opt['remove_edges'],
-      tau=opt['tau'], is_undirected=False, data_dir=data_dir)
+    dataset = SDRFCDataset(name=opt['dataset'], use_lcc=opt['use_lcc'], max_steps=opt['max_steps'],
+                           remove_edges=opt['remove_edges'],
+                           tau=opt['tau'], is_undirected=False, data_dir=data_dir)
   elif opt['preprocessing'] in ['sdrfcut', 'sdrfcuf']:
     dataset = SDRFCDataset(
       name=opt['dataset'],
@@ -99,9 +102,9 @@ def set_search_space(opt):
   opt['lr'] = tune.loguniform(0.005, 0.05)
   opt['weight_decay'] = tune.loguniform(0.01, 0.2)
 
-  if opt['preprocessing'] in ['none','undirected']:
+  if opt['preprocessing'] in ['none', 'undirected']:
     pass
-  elif opt['preprocessing'] in ['ppr','undirected_ppr']:
+  elif opt['preprocessing'] in ['ppr', 'undirected_ppr']:
     opt['alpha'] = tune.loguniform(0.01, 0.12)
     opt['k'] = tune.choice([16, 32, 64])
     opt['eps'] = tune.loguniform(0.0001, 0.001)
@@ -129,9 +132,11 @@ def train_ray(opt, checkpoint_dir=None, data_dir="./digl/data", patience=25, tes
   patience_counter = 0
   tmp_dict = {'val_acc': 0}
   best_dict = defaultdict(list)
-  parameters = [{'params': model.non_reg_params, 'weight_decay': 0},
-                {'params': model.reg_params, 'weight_decay': opt['weight_decay']}]
-  optimizer = get_optimizer(opt['optimizer'], parameters, lr=opt['lr'], weight_decay=opt['decay'])
+  optimizer = Adam(
+    [
+      {'params': model.non_reg_params, 'weight_decay': 0},
+      {'params': model.reg_params, 'weight_decay': opt['weight_decay']}
+    ], lr=opt['lr'])
 
   for epoch in range(1, opt['max_epochs'] + 1):
     if patience_counter == patience:
@@ -157,7 +162,7 @@ def train_ray(opt, checkpoint_dir=None, data_dir="./digl/data", patience=25, tes
 def main(opt):
   data_dir = os.path.abspath("./digl/data")
   opt['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-  #todo replace
+  # todo replace
   # for method in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
   for method in ['sdrfct']:
     opt['preprocessing'] = method
@@ -176,7 +181,7 @@ def main(opt):
     )
     # choose a search algorithm from https://docs.ray.io/en/latest/tune/api_docs/suggestion.html
     search_alg = None
-    #todo this won't work as preprocessing is a tune.choice object
+    # todo this won't work as preprocessing is a tune.choice object
     # experiment_name = opt['dataset'][:4] + '_' + opt['preprocessing']
 
     result = tune.run(
