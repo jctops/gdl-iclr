@@ -16,8 +16,8 @@ from digl.seeds import development_seed
 DATA_PATH = './digl/data'
 
 
-def get_dataset(name: str, use_lcc: bool = True) -> InMemoryDataset:
-    path = os.path.join(DATA_PATH, name)
+def get_dataset(name: str, use_lcc: bool = True, data_dir=DATA_PATH) -> InMemoryDataset:
+    path = os.path.join(data_dir, name)
     if name in ['Cora', 'Citeseer', 'Pubmed']:
         dataset = Planetoid(path, name)
     elif name in ['Computers', 'Photo']:
@@ -370,7 +370,8 @@ class SDRFCDataset(InMemoryDataset):
                  max_steps: int = None,
                  remove_edges: bool = True,
                  tau: float = 1,
-                 is_undirected: bool = False):
+                 is_undirected: bool = False,
+                 data_dir: str = DATA_PATH):
         self.name = name
         self.use_lcc = use_lcc
         self.max_steps = max_steps
@@ -378,7 +379,7 @@ class SDRFCDataset(InMemoryDataset):
         self.tau = tau
         self.is_undirected = is_undirected
 
-        super(SDRFCDataset, self).__init__(DATA_PATH)
+        super(SDRFCDataset, self).__init__(data_dir)
         self.data, self.slices = torch.load(self.processed_paths[0])
 
     @property

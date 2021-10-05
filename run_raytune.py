@@ -62,42 +62,22 @@ def get_optimizer(name, parameters, lr, weight_decay=0):
     raise Exception("Unsupported optimizer: {}".format(name))
 
 
-def get_preprocessed_dataset(opt):
+def get_preprocessed_dataset(opt, data_dir):
   if opt['preprocessing'] == 'none':
-    dataset = get_dataset(
-      name=opt['dataset'],
-      use_lcc=opt['use_lcc'],
-    )
+    dataset = get_dataset(name=opt['dataset'], use_lcc=opt['use_lcc'],data_dir=data_dir)
   elif opt['preprocessing'] == 'undirected':
-    dataset = UndirectedDataset(
-      name=opt['dataset'],
-      use_lcc=opt['use_lcc'],
-    )
+    dataset = UndirectedDataset(name=opt['dataset'], use_lcc=opt['use_lcc'],)
   elif opt['preprocessing'] == 'ppr':
-    dataset = PPRDataset(
-      name=opt['dataset'],
-      use_lcc=opt['use_lcc'],
-      alpha=opt['alpha'],
-      k=opt['k'] if opt['use_k'] else None,
+    dataset = PPRDataset(name=opt['dataset'], use_lcc=opt['use_lcc'], alpha=opt['alpha'], k=opt['k'] if opt['use_k'] else None,
       eps=opt['eps'] if not opt['use_k'] else None,
     )
   elif opt['preprocessing'] == 'undirected_ppr':
-    dataset = UndirectedPPRDataset(
-      name=opt['dataset'],
-      use_lcc=opt['use_lcc'],
-      alpha=opt['alpha'],
-      k=opt['k'] if opt['use_k'] else None,
+    dataset = UndirectedPPRDataset(name=opt['dataset'], use_lcc=opt['use_lcc'], alpha=opt['alpha'], k=opt['k'] if opt['use_k'] else None,
       eps=opt['eps'] if not opt['use_k'] else None,
     )
   elif opt['preprocessing'] in ['sdrfct', 'sdrfcf']:
-    dataset = SDRFCDataset(
-      name=opt['dataset'],
-      use_lcc=opt['use_lcc'],
-      max_steps=opt['max_steps'],
-      remove_edges=opt['remove_edges'],
-      tau=opt['tau'],
-      is_undirected=False
-    )
+    dataset = SDRFCDataset(name=opt['dataset'], use_lcc=opt['use_lcc'], max_steps=opt['max_steps'], remove_edges=opt['remove_edges'],
+      tau=opt['tau'], is_undirected=False, data_dir=data_dir)
   elif opt['preprocessing'] in ['sdrfcut', 'sdrfcuf']:
     dataset = SDRFCDataset(
       name=opt['dataset'],
@@ -140,7 +120,7 @@ def set_search_space(opt):
 def train_ray(opt, checkpoint_dir=None, data_dir="./digl/data", patience=25, test=True):
   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
   print(f'options: {opt}')
-  dataset = get_preprocessed_dataset(opt)
+  dataset = get_preprocessed_dataset(opt, data_dir)
   model = GCN(
     dataset,
     hidden=opt['hidden_layers'] * [opt['hidden_units']],
@@ -176,9 +156,14 @@ def train_ray(opt, checkpoint_dir=None, data_dir="./digl/data", patience=25, tes
 
 def main(opt):
   data_dir = os.path.abspath("./digl/data")
-  for method in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
+  opt['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+  #todo replace
+  # for method in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
+  for method in ['sdrfct']:
     opt['preprocessing'] = method
     opt = set_search_space(opt)
+    # todo remove after debugging
+    opt['max_steps'] = 10
     scheduler = ASHAScheduler(
       metric='accuracy',
       mode="max",
