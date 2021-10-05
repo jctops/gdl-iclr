@@ -88,7 +88,7 @@ def get_preprocessed_dataset(opt, data_dir):
       max_steps=opt['max_steps'],
       remove_edges=opt['remove_edges'],
       tau=opt['tau'],
-      is_undirected=True
+      is_undirected=True, data_dir=data_dir
     )
   dataset.data = dataset.data.to(opt['device'])
   return dataset
@@ -138,7 +138,7 @@ def train_ray(opt, checkpoint_dir=None, data_dir="./digl/data", patience=25, tes
       {'params': model.reg_params, 'weight_decay': opt['weight_decay']}
     ], lr=opt['lr'])
 
-  for epoch in range(1, opt['max_epochs'] + 1):
+  for epoch in range(1, opt['epoch'] + 1):
     if patience_counter == patience:
       break
 
@@ -160,7 +160,7 @@ def train_ray(opt, checkpoint_dir=None, data_dir="./digl/data", patience=25, tes
 
 
 def main(opt):
-  data_dir = os.path.abspath("./digl/data")
+  data_dir = os.path.abspath("digl/data")
   opt['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
   # todo replace
   # for method in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
