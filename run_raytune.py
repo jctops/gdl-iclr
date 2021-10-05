@@ -190,11 +190,11 @@ def main(opt):
   # choose a search algorithm from https://docs.ray.io/en/latest/tune/api_docs/suggestion.html
   search_alg = None
   #todo this won't work as preprocessing is a tune.choice object
-  experiment_name = opt['dataset'][:4] + '_' + opt['preprocessing']
+  # experiment_name = opt['dataset'][:4] + '_' + opt['preprocessing']
 
   result = tune.run(
     partial(train_ray, data_dir=data_dir),
-    name=experiment_name,
+    name=opt['name'],
     resources_per_trial={"cpu": opt["cpus"], "gpu": opt["gpus"]},
     search_alg=search_alg,
     keep_checkpoints_num=3,
