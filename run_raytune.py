@@ -204,7 +204,7 @@ def main(opt):
   opt['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
   # todo replace
   # for method in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
-  for method in ['sdrfcf']:
+  for method in ['sdrfcuf']:
   # for method in ['sdrfct']:
     opt['preprocessing'] = method
     opt = set_search_space(opt)
