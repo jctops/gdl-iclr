@@ -122,50 +122,82 @@ def set_search_space(opt):
   return opt
 
 
+def get_test_results(models, datas):
+  eval_dicts = [evaluate(model, data, test=True) for model, data in zip(models, datas)]
+  test_accs = [dict['test_acc'] for dict in eval_dicts]
+  val_accs = [dict['val_acc'] for dict in eval_dicts]
+  return test_accs, val_accs
+
 def train_ray(opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25, test=True):
   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
   print(f'options: {opt}')
   dataset = get_preprocessed_dataset(opt, data_dir)
   #todo change seeds and num development and n_reps
-  model = GCN(dataset, hidden=opt['hidden_layers'] * [opt['hidden_units']], dropout=opt['dropout']).to(device)
-  n_reps = 5
-  best_dict = defaultdict(list)
-  for seed in enumerate(test_seeds[0:n_reps]):
-    dataset.data = set_train_val_test_split(seed, dataset.data, num_development=1500,).to(device)
 
-    patience_counter = 0
-    tmp_dict = {'val_acc': 0}
-    model.to(device).reset_parameters()
+  models = []
+  datas = []
+  optimizers = []
+  best_dict = defaultdict(list)
+  for seed in enumerate(test_seeds[0:opt['num_splits']]):
+    dataset.data = set_train_val_test_split(seed, dataset.data, num_development=1500,).to(device)
+    model = GCN(dataset, hidden=opt['hidden_layers'] * [opt['hidden_units']], dropout=opt['dropout']).to(device)
     optimizer = Adam(
       [
         {'params': model.non_reg_params, 'weight_decay': 0},
         {'params': model.reg_params, 'weight_decay': opt['weight_decay']}
       ], lr=opt['lr'])
+    models.append(model)
+    datas.append(dataset.data)
+    optimizers.append(optimizer)
+    if checkpoint_dir:
+      checkpoint = os.path.join(checkpoint_dir, "checkpoint")
+      model_state, optimizer_state = torch.load(checkpoint)
+      model.load_state_dict(model_state)
+      optimizer.load_state_dict(optimizer_state)
+    patience_counter = 0
 
-    for epoch in range(1, opt['epoch'] + 1):
-      if patience_counter == patience:
-        break
+    tmp_dict = {'val_acc': 0}
+    model.to(device).reset_parameters()
 
-      loss = train(model, optimizer, dataset.data)
-      eval_dict = evaluate(model, dataset.data, test)
 
-      if eval_dict['val_acc'] < tmp_dict['val_acc']:
-        patience_counter += 1
-      else:
-        patience_counter = 0
-        tmp_dict['epoch'] = epoch
-        for k, v in eval_dict.items():
-          tmp_dict[k] = v
+  for epoch in range(1, opt['epoch'] + 1):
+    if patience_counter == patience:
+      break
 
-    for k, v in tmp_dict.items():
-      best_dict[k].append(v)
+    # loss = train(model, optimizer, dataset.data)
+    loss = np.mean([train(model, optimizer, data) for model, optimizer, data in zip(models, optimizers, datas)])
+    # eval_dict = evaluate(model, dataset.data, test)
+    test_accs, val_accs = get_test_results(models, datas)
 
-  print(f'best_dict: {best_dict}')
-  test_accs = best_dict['test_acc']
-  boots_series = sns.algorithms.bootstrap(test_accs, func=np.mean, n_boot=1000)
-  test_acc_mean = np.mean(test_accs)
-  test_acc_ci = np.max(np.abs(sns.utils.ci(boots_series, 95) - test_acc_mean))
-  tune.report(loss=loss, accuracy=np.mean(best_dict['val_acc']), test_acc=np.mean(best_dict['test_acc']), conf_int=test_acc_ci)
+    with tune.checkpoint_dir(step=epoch) as checkpoint_dir:
+      best = np.argmax(val_accs)
+      path = os.path.join(checkpoint_dir, "checkpoint")
+      torch.save((models[best].state_dict(), optimizers[best].state_dict()), path)
+
+    # test_accs = best_dict['test_acc']
+    boots_series = sns.algorithms.bootstrap(test_accs, func=np.mean, n_boot=1000)
+    test_acc_mean = np.mean(test_accs)
+    test_acc_ci = np.max(np.abs(sns.utils.ci(boots_series, 95) - test_acc_mean))
+    tune.report(loss=loss, accuracy=np.mean(best_dict['val_acc']), test_acc=np.mean(best_dict['test_acc']),
+                conf_int=test_acc_ci)
+
+  #   if eval_dict['val_acc'] < tmp_dict['val_acc']:
+  #     patience_counter += 1
+  #   else:
+  #     patience_counter = 0
+  #     tmp_dict['epoch'] = epoch
+  #     for k, v in eval_dict.items():
+  #       tmp_dict[k] = v
+  #
+  #   for k, v in tmp_dict.items():
+  #     best_dict[k].append(v)
+  #
+  # print(f'best_dict: {best_dict}')
+  # test_accs = best_dict['test_acc']
+  # boots_series = sns.algorithms.bootstrap(test_accs, func=np.mean, n_boot=1000)
+  # test_acc_mean = np.mean(test_accs)
+  # test_acc_ci = np.max(np.abs(sns.utils.ci(boots_series, 95) - test_acc_mean))
+  # tune.report(loss=loss, accuracy=np.mean(best_dict['val_acc']), test_acc=np.mean(best_dict['test_acc']), conf_int=test_acc_ci)
 
 
 def main(opt):
