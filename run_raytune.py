@@ -162,7 +162,11 @@ def train_ray(opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25,
     for k, v in tmp_dict.items():
       best_dict[k].append(v)
 
-  tune.report(loss=loss, accuracy=np.mean(best_dict['val_acc']), test_acc=np.mean(best_dict['test_acc']))
+  test_accs = best_dict['test_acc']
+  boots_series = sns.algorithms.bootstrap(test_accs, func=np.mean, n_boot=1000)
+  test_acc_mean = np.mean(test_accs)
+  test_acc_ci = np.max(np.abs(sns.utils.ci(boots_series, 95) - test_acc_mean))
+  tune.report(loss=loss, accuracy=np.mean(best_dict['val_acc']), test_acc=np.mean(best_dict['test_acc']), conf_int=test_acc_ci)
 
 
 def main(opt):
@@ -170,12 +174,13 @@ def main(opt):
   print(f'data directory: {data_dir}')
   opt['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
   # todo replace
-  for method in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
+  # for method in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
+  for method in ['sdrfcf', 'sdrfcuf']:
   # for method in ['sdrfct']:
     opt['preprocessing'] = method
     opt = set_search_space(opt)
     # todo remove after debugging
-    opt['max_steps'] = 500
+    opt['max_steps'] = 1000
     scheduler = ASHAScheduler(
       metric='accuracy',
       mode="max",
