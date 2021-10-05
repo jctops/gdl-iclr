@@ -261,7 +261,7 @@ if __name__ == '__main__':
     "--reduction_factor", type=int, default=4, help="number of trials is halved after this many epochs"
   )
   parser.add_argument("--name", type=str, default="ray_exp")
-  parser.add_argument("--num_splits", type=int, default=0, help="Number of random splits >= 0. 0 for planetoid split")
+  parser.add_argument("--num_splits", type=int, default=5, help="Number of random splits >= 0. 0 for planetoid split")
   parser.add_argument("--num_init", type=int, default=1, help="Number of random initializations >= 0")
   parser.add_argument('--metric', type=str, default='accuracy',
                       help='metric to sort the hyperparameter tuning runs on')
