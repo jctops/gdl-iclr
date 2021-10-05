@@ -112,7 +112,6 @@ def get_preprocessed_dataset(opt):
 
 
 def set_search_space(opt):
-  opt['preprocessing'] = tune.choice(['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf'])
   opt['num_development'] = 1500
   opt['hidden_layers'] = tune.choice([1, 2]),  # [1,3]
   opt['hidden_units'] = tune.sample_from(lambda _: 2 ** np.random.randint(4, 8))
@@ -120,9 +119,9 @@ def set_search_space(opt):
   opt['lr'] = tune.loguniform(0.005, 0.05)
   opt['weight_decay'] = tune.loguniform(0.01, 0.2)
 
-  if (opt['preprocessing'] == 'none') or (opt['preprocessing'] == 'undirected'):
+  if opt['preprocessing'] in ['none','undirected']:
     pass
-  elif (opt['preprocessing'] == 'ppr') or (opt['preprocessing'] == 'undirected_ppr'):
+  elif opt['preprocessing'] in ['ppr','undirected_ppr']:
     opt['alpha'] = tune.loguniform(0.01, 0.12)
     opt['k'] = tune.choice([16, 32, 64])
     opt['eps'] = tune.loguniform(0.0001, 0.001)
@@ -138,8 +137,9 @@ def set_search_space(opt):
   return opt
 
 
-def train_ray(opt, checkpoint_dir=None, data_dir="./digl/data", patience=25, test=False):
+def train_ray(opt, checkpoint_dir=None, data_dir="./digl/data", patience=25, test=True):
   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+  print(f'options: {opt}')
   dataset = get_preprocessed_dataset(opt)
   model = GCN(
     dataset,
@@ -176,37 +176,39 @@ def train_ray(opt, checkpoint_dir=None, data_dir="./digl/data", patience=25, tes
 
 def main(opt):
   data_dir = os.path.abspath("./digl/data")
-  opt = set_search_space(opt)
-  scheduler = ASHAScheduler(
-    metric='accuracy',
-    mode="max",
-    max_t=opt["epoch"],
-    grace_period=opt["grace_period"],
-    reduction_factor=opt["reduction_factor"],
-  )
-  reporter = CLIReporter(
-    metric_columns=["accuracy"]
-  )
-  # choose a search algorithm from https://docs.ray.io/en/latest/tune/api_docs/suggestion.html
-  search_alg = None
-  #todo this won't work as preprocessing is a tune.choice object
-  # experiment_name = opt['dataset'][:4] + '_' + opt['preprocessing']
+  for method in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
+    opt['preprocessing'] = method
+    opt = set_search_space(opt)
+    scheduler = ASHAScheduler(
+      metric='accuracy',
+      mode="max",
+      max_t=opt["epoch"],
+      grace_period=opt["grace_period"],
+      reduction_factor=opt["reduction_factor"],
+    )
+    reporter = CLIReporter(
+      metric_columns=["accuracy"]
+    )
+    # choose a search algorithm from https://docs.ray.io/en/latest/tune/api_docs/suggestion.html
+    search_alg = None
+    #todo this won't work as preprocessing is a tune.choice object
+    # experiment_name = opt['dataset'][:4] + '_' + opt['preprocessing']
 
-  result = tune.run(
-    partial(train_ray, data_dir=data_dir),
-    name=opt['name'],
-    resources_per_trial={"cpu": opt["cpus"], "gpu": opt["gpus"]},
-    search_alg=search_alg,
-    keep_checkpoints_num=3,
-    checkpoint_score_attr=opt['metric'],
-    config=opt,
-    num_samples=opt["num_samples"],
-    scheduler=scheduler,
-    max_failures=2,
-    local_dir="ray_tune",
-    progress_reporter=reporter,
-    raise_on_failed_trial=False,
-  )
+    result = tune.run(
+      partial(train_ray, data_dir=data_dir),
+      name=opt['name'],
+      resources_per_trial={"cpu": opt["cpus"], "gpu": opt["gpus"]},
+      search_alg=search_alg,
+      keep_checkpoints_num=3,
+      checkpoint_score_attr=opt['metric'],
+      config=opt,
+      num_samples=opt["num_samples"],
+      scheduler=scheduler,
+      max_failures=2,
+      local_dir="ray_tune",
+      progress_reporter=reporter,
+      raise_on_failed_trial=False,
+    )
 
 
 if __name__ == '__main__':
@@ -218,8 +220,8 @@ if __name__ == '__main__':
   parser.add_argument("--epoch", type=int, default=100, help="Number of training epochs per iteration.")
   # ray args
   parser.add_argument("--num_samples", type=int, default=32, help="number of ray trials")
-  parser.add_argument("--gpus", type=float, default=0, help="number of gpus per trial. Can be fractional")
-  parser.add_argument("--cpus", type=float, default=1, help="number of cpus per trial. Can be fractional")
+  parser.add_argument("--gpus", type=float, default=1, help="number of gpus per trial. Can be fractional")
+  parser.add_argument("--cpus", type=float, default=2, help="number of cpus per trial. Can be fractional")
   parser.add_argument(
     "--grace_period", type=int, default=5, help="number of epochs to wait before terminating trials"
   )
