@@ -378,6 +378,7 @@ class SDRFCDataset(InMemoryDataset):
         self.remove_edges = remove_edges
         self.tau = tau
         self.is_undirected = is_undirected
+        self.data_dir = data_dir
 
         super(SDRFCDataset, self).__init__(data_dir)
         self.data, self.slices = torch.load(self.processed_paths[0])
@@ -396,7 +397,7 @@ class SDRFCDataset(InMemoryDataset):
     def process(self):
         from gdl.sdrf import sdrf_w_cuda
 
-        base = get_dataset(name=self.name, use_lcc=self.use_lcc)
+        base = get_dataset(name=self.name, use_lcc=self.use_lcc, data_dir=self.data_dir)
 
         altered_data = sdrf_w_cuda(
             base.data,

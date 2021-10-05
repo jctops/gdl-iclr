@@ -120,10 +120,12 @@ def set_search_space(opt):
   return opt
 
 
-def train_ray(opt, checkpoint_dir=None, data_dir="./digl/data", patience=25, test=True):
+def train_ray(opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25, test=True):
   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
   print(f'options: {opt}')
   dataset = get_preprocessed_dataset(opt, data_dir)
+  #todo change seeds and num development
+  dataset.data = set_train_val_test_split(1234, dataset.data, num_development=1500,).to(device)
   model = GCN(
     dataset,
     hidden=opt['hidden_layers'] * [opt['hidden_units']],
@@ -161,6 +163,7 @@ def train_ray(opt, checkpoint_dir=None, data_dir="./digl/data", patience=25, tes
 
 def main(opt):
   data_dir = os.path.abspath("digl/data")
+  print(f'data directory: {data_dir}')
   opt['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
   # todo replace
   # for method in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
