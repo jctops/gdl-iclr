@@ -126,15 +126,15 @@ def train_ray(opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25,
   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
   print(f'options: {opt}')
   dataset = get_preprocessed_dataset(opt, data_dir)
-  #todo change seeds and num development
+  #todo change seeds and num development and n_reps
   model = GCN(dataset, hidden=opt['hidden_layers'] * [opt['hidden_units']], dropout=opt['dropout']).to(device)
   n_reps = 5
+  best_dict = defaultdict(list)
   for seed in enumerate(test_seeds[0:n_reps]):
     dataset.data = set_train_val_test_split(seed, dataset.data, num_development=1500,).to(device)
 
     patience_counter = 0
     tmp_dict = {'val_acc': 0}
-    best_dict = defaultdict(list)
     model.to(device).reset_parameters()
     optimizer = Adam(
       [
@@ -179,7 +179,7 @@ def main(opt):
     opt['preprocessing'] = method
     opt = set_search_space(opt)
     # todo remove after debugging
-    opt['max_steps'] = 1000
+    opt['max_steps'] = 10
     scheduler = ASHAScheduler(
       metric='accuracy',
       mode="max",
