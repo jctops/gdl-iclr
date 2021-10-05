@@ -93,7 +93,7 @@ def get_preprocessed_dataset(opt, data_dir):
 
 def set_search_space(opt):
   opt['num_development'] = 1500
-  opt['hidden_layers'] = tune.choice([1, 2]),  # [1,3]
+  opt['hidden_layers'] = tune.choice([1, 2])  # [1,3]
   opt['hidden_units'] = tune.sample_from(lambda _: 2 ** np.random.randint(4, 8))
   opt['dropout'] = tune.uniform(0.2, 0.8)
   opt['lr'] = tune.loguniform(0.005, 0.05)
