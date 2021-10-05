@@ -170,12 +170,12 @@ def main(opt):
   print(f'data directory: {data_dir}')
   opt['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
   # todo replace
-  # for method in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
-  for method in ['sdrfct']:
+  for method in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
+  # for method in ['sdrfct']:
     opt['preprocessing'] = method
     opt = set_search_space(opt)
     # todo remove after debugging
-    opt['max_steps'] = 100
+    opt['max_steps'] = 500
     scheduler = ASHAScheduler(
       metric='accuracy',
       mode="max",
