@@ -231,6 +231,9 @@ if __name__ == '__main__':
   parser.add_argument("--num_init", type=int, default=1, help="Number of random initializations >= 0")
   parser.add_argument('--metric', type=str, default='accuracy',
                       help='metric to sort the hyperparameter tuning runs on')
+  parser.add_argument('--use_lcc', dest='use_lcc', action='store_true')
+  parser.add_argument('--not_lcc', dest='use_lcc', action='store_false')
+  parser.set_defaults(use_lcc=True)
   args = parser.parse_args()
   opt = vars(args)
   main(opt)
