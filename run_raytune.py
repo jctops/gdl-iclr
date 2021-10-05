@@ -210,7 +210,6 @@ def main(opt):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument("--optimizer", type=str, default="adam", help="Optimizer.")
-  args = parser.parse_args()
   parser.add_argument(
     "--dataset", type=str, default="Cora", help="Cora, Citeseer, Pubmed, Computers, Photo, CoauthorCS"
   )
@@ -230,5 +229,6 @@ if __name__ == '__main__':
   parser.add_argument("--num_init", type=int, default=1, help="Number of random initializations >= 0")
   parser.add_argument('--metric', type=str, default='accuracy',
                       help='metric to sort the hyperparameter tuning runs on')
+  args = parser.parse_args()
   opt = vars(args)
   main(opt)
