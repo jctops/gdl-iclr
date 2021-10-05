@@ -101,8 +101,8 @@ def set_search_space(opt):
   opt['hidden_layers'] = tune.choice([1, 2])  # [1,3]
   opt['hidden_units'] = tune.sample_from(lambda _: 2 ** np.random.randint(4, 8))
   opt['dropout'] = tune.uniform(0.2, 0.8)
-  opt['lr'] = tune.loguniform(0.005, 0.05)
-  opt['weight_decay'] = tune.loguniform(0.01, 0.2)
+  opt['lr'] = tune.loguniform(0.005, 0.03)
+  opt['weight_decay'] = tune.loguniform(0.01, 0.1)
 
   if opt['preprocessing'] in ['none', 'undirected']:
     pass
@@ -127,7 +127,7 @@ def train_ray(opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25,
   print(f'options: {opt}')
   dataset = get_preprocessed_dataset(opt, data_dir)
   #todo change seeds and num development
-  n_reps = 2
+  n_reps = 5
   for seed in enumerate(test_seeds[0:n_reps]):
     dataset.data = set_train_val_test_split(seed, dataset.data, num_development=1500,).to(device)
     model = GCN(
@@ -162,7 +162,7 @@ def train_ray(opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25,
     for k, v in tmp_dict.items():
       best_dict[k].append(v)
 
-  tune.report(loss=loss, accuracy=np.mean(best_dict['val_acc']), test_scc=np.mean(best_dict['test_acc']))
+  tune.report(loss=loss, accuracy=np.mean(best_dict['val_acc']), test_acc=np.mean(best_dict['test_acc']))
 
 
 def main(opt):
@@ -175,7 +175,7 @@ def main(opt):
     opt['preprocessing'] = method
     opt = set_search_space(opt)
     # todo remove after debugging
-    opt['max_steps'] = 10
+    opt['max_steps'] = 100
     scheduler = ASHAScheduler(
       metric='accuracy',
       mode="max",
