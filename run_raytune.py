@@ -99,11 +99,10 @@ def get_preprocessed_dataset(opt, data_dir):
 def set_search_space(opt):
   opt['num_development'] = 1500
   opt['hidden_layers'] = tune.choice([1, 2])  # [1,3]
-  opt['hidden_units'] = tune.sample_from(lambda _: 2 ** np.random.randint(4, 8))
+  opt['hidden_units'] = tune.sample_from(lambda _: 2 ** np.random.randint(6, 9))
   opt['dropout'] = 0.5
   opt['lr'] = tune.loguniform(0.005, 0.03)
-  opt['weight_decay'] = tune.loguniform(0.01, 0.1)
-
+  opt['weight_decay'] = tune.loguniform(0.001, 0.1)
   if opt['preprocessing'] in ['none', 'undirected']:
     pass
   elif opt['preprocessing'] in ['ppr', 'undirected_ppr']:
@@ -113,8 +112,8 @@ def set_search_space(opt):
     opt['use_k'] = tune.choice([True, False])
 
   elif opt['preprocessing'] in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
-    opt['tau'] = tune.loguniform(200, 400)
-    opt['max_steps'] = tune.choice([1000, 2000, 3000])
+    opt['tau'] = tune.loguniform(250, 500)
+    opt['max_steps'] = tune.choice([500, 1000, 2000])
     opt['remove_edges'] = True
 
   if opt['preprocessing'] in ['sdrfcf', 'sdrfcuf']:
@@ -204,13 +203,12 @@ def main(opt):
   print(f'data directory: {data_dir}')
   opt['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
   # todo replace
-  for method in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
-  # for method in ['sdrfcf', 'sdrfcuf']:
+  # for method in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
+  for method in ['sdrfcf', 'sdrfcuf']:
   # for method in ['sdrfct']:
     opt['preprocessing'] = method
     opt = set_search_space(opt)
     # todo remove after debugging
-    opt['max_steps'] = 1000
     scheduler = ASHAScheduler(
       metric='accuracy',
       mode="max",
