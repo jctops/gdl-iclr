@@ -131,8 +131,8 @@ This can easily be done via either |virtualenv|_::
 
 or Miniconda_::
 
-    conda create -n pyscaffold python=3 six virtualenv pytest pytest-cov
-    conda activate pyscaffold
+    conda create -n gdl python=3 six virtualenv pytest pytest-cov
+    conda activate gdl
 
 Clone the repository
 --------------------
@@ -220,7 +220,7 @@ Submit your contribution
 
    .. todo:: if you are using GitHub, you can uncomment the following paragraph
 
-      Find more detailed information `creating a PR`_. You might also want to open
+      Find more detailed information in `creating a PR`_. You might also want to open
       the PR as a draft first and mark it as ready for review after the feedbacks
       from the continuous integration (CI) system or any required fixes.
 
