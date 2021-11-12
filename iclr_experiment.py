@@ -76,3 +76,145 @@ def get_test_results(models, datas):
 def train_ray():
     pass
 
+# def train_ray(opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25, test=True):
+#   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+#   dataset = get_preprocessed_dataset(opt, data_dir)
+#   #todo change seeds and num development and n_reps
+
+#   models = []
+#   datas = []
+#   optimizers = []
+#   best_dict = defaultdict(list)
+#   for seed in enumerate(test_seeds[0:opt['num_splits']]):
+#     dataset.data = set_train_val_test_split(seed, dataset.data, num_development=1500,).to(device)
+#     model = GCN(dataset, hidden=opt['hidden_layers'] * [opt['hidden_units']], dropout=opt['dropout']).to(device)
+#     optimizer = Adam(
+#       [
+#         {'params': model.non_reg_params, 'weight_decay': 0},
+#         {'params': model.reg_params, 'weight_decay': opt['weight_decay']}
+#       ], lr=opt['lr'])
+#     models.append(model)
+#     datas.append(dataset.data)
+#     optimizers.append(optimizer)
+#     if checkpoint_dir:
+#       checkpoint = os.path.join(checkpoint_dir, "checkpoint")
+#       model_state, optimizer_state = torch.load(checkpoint)
+#       model.load_state_dict(model_state)
+#       optimizer.load_state_dict(optimizer_state)
+#     # patience_counter = 0
+#     #
+#     # tmp_dict = {'val_acc': 0}
+#     # model.to(device).reset_parameters()
+
+
+#   for epoch in range(1, opt['epoch'] + 1):
+#     # if patience_counter == patience:
+#     #   break
+
+#     # loss = train(model, optimizer, dataset.data)
+#     loss = np.mean([train(model, optimizer, data) for model, optimizer, data in zip(models, optimizers, datas)])
+#     # eval_dict = evaluate(model, dataset.data, test)
+#     test_accs, val_accs = get_test_results(models, datas)
+
+#     with tune.checkpoint_dir(step=epoch) as checkpoint_dir:
+#       best = np.argmax(val_accs)
+#       path = os.path.join(checkpoint_dir, "checkpoint")
+#       torch.save((models[best].state_dict(), optimizers[best].state_dict()), path)
+
+#     # test_accs = best_dict['test_acc']
+#     boots_series = sns.algorithms.bootstrap(test_accs, func=np.mean, n_boot=1000)
+#     test_acc_mean = np.mean(test_accs)
+#     test_acc_ci = np.max(np.abs(sns.utils.ci(boots_series, 95) - test_acc_mean))
+#     tune.report(loss=loss, accuracy=np.mean(val_accs), test_acc=test_acc_mean,
+#                 conf_int=test_acc_ci)
+
+#   #   if eval_dict['val_acc'] < tmp_dict['val_acc']:
+#   #     patience_counter += 1
+#   #   else:
+#   #     patience_counter = 0
+#   #     tmp_dict['epoch'] = epoch
+#   #     for k, v in eval_dict.items():
+#   #       tmp_dict[k] = v
+#   #
+#   #   for k, v in tmp_dict.items():
+#   #     best_dict[k].append(v)
+#   #
+#   # print(f'best_dict: {best_dict}')
+#   # test_accs = best_dict['test_acc']
+#   # boots_series = sns.algorithms.bootstrap(test_accs, func=np.mean, n_boot=1000)
+#   # test_acc_mean = np.mean(test_accs)
+#   # test_acc_ci = np.max(np.abs(sns.utils.ci(boots_series, 95) - test_acc_mean))
+#   # tune.report(loss=loss, accuracy=np.mean(best_dict['val_acc']), test_acc=np.mean(best_dict['test_acc']), conf_int=test_acc_ci)
+
+
+# def main(opt):
+#   data_dir = os.path.abspath("digl/data")
+#   print(f'data directory: {data_dir}')
+#   opt['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+#   # todo replace
+#   # for method in ['sdrfct', 'sdrfcf', 'sdrfcut', 'sdrfcuf']:
+#   for method in ['sdrfcuf']:
+#   # for method in ['sdrfct']:
+#     opt['preprocessing'] = method
+#     opt = set_search_space(opt)
+#     # todo remove after debugging
+#     scheduler = ASHAScheduler(
+#       metric='accuracy',
+#       mode="max",
+#       max_t=opt["epoch"],
+#       grace_period=opt["grace_period"],
+#       reduction_factor=opt["reduction_factor"],
+#     )
+#     reporter = CLIReporter(
+#       metric_columns=["accuracy", "test_acc", "conf_int"]
+#     )
+#     # choose a search algorithm from https://docs.ray.io/en/latest/tune/api_docs/suggestion.html
+#     search_alg = None
+#     # todo this won't work as preprocessing is a tune.choice object
+#     # experiment_name = opt['dataset'][:4] + '_' + opt['preprocessing']
+
+#     result = tune.run(
+#       partial(train_ray, data_dir=data_dir),
+#       name=opt['name'],
+#       resources_per_trial={"cpu": opt["cpus"], "gpu": opt["gpus"]},
+#       search_alg=search_alg,
+#       keep_checkpoints_num=3,
+#       checkpoint_score_attr=opt['metric'],
+#       config=opt,
+#       num_samples=opt["num_samples"],
+#       scheduler=scheduler,
+#       max_failures=2,
+#       local_dir="ray_tune",
+#       progress_reporter=reporter,
+#       raise_on_failed_trial=False,
+#     )
+
+
+# if __name__ == '__main__':
+#   parser = argparse.ArgumentParser()
+#   parser.add_argument("--optimizer", type=str, default="adam", help="Optimizer.")
+#   parser.add_argument(
+#     "--dataset", type=str, default="Cora", help="Cora, Citeseer, Pubmed, Computers, Photo, CoauthorCS"
+#   )
+#   parser.add_argument("--epoch", type=int, default=100, help="Number of training epochs per iteration.")
+#   # ray args
+#   parser.add_argument("--num_samples", type=int, default=32, help="number of ray trials")
+#   parser.add_argument("--gpus", type=float, default=1, help="number of gpus per trial. Can be fractional")
+#   parser.add_argument("--cpus", type=float, default=2, help="number of cpus per trial. Can be fractional")
+#   parser.add_argument(
+#     "--grace_period", type=int, default=5, help="number of epochs to wait before terminating trials"
+#   )
+#   parser.add_argument(
+#     "--reduction_factor", type=int, default=4, help="number of trials is halved after this many epochs"
+#   )
+#   parser.add_argument("--name", type=str, default="ray_exp")
+#   parser.add_argument("--num_splits", type=int, default=5, help="Number of random splits >= 0. 0 for planetoid split")
+#   parser.add_argument("--num_init", type=int, default=1, help="Number of random initializations >= 0")
+#   parser.add_argument('--metric', type=str, default='accuracy',
+#                       help='metric to sort the hyperparameter tuning runs on')
+#   parser.add_argument('--use_lcc', dest='use_lcc', action='store_true')
+#   parser.add_argument('--not_lcc', dest='use_lcc', action='store_false')
+#   parser.set_defaults(use_lcc=True)
+#   args = parser.parse_args()
+#   opt = vars(args)
+#   main(opt)
