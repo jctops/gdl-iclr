@@ -127,7 +127,6 @@ class BaseDataset(InMemoryDataset):
         if data_dir is None:
             data_dir = DEFAULT_DATA_PATH
         self.data_dir = data_dir
-        print("we're in data_dir_init at least", flush=True)
 
         super(BaseDataset, self).__init__(self.data_dir)
         self.data, self.slices = torch.load(self.processed_paths[0])

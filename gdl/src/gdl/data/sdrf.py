@@ -125,7 +125,7 @@ class SDRFDataset(BaseDataset):
     ):
         self.name = name
         self.use_lcc = use_lcc
-        self.max_steps = max_steps
+        self.max_steps = int(max_steps)
         self.remove_edges = remove_edges
         self.removal_bound = removal_bound
         self.tau = tau
@@ -139,7 +139,7 @@ class SDRFDataset(BaseDataset):
             loops=self.max_steps,
             remove_edges=self.remove_edges,
             tau=self.tau,
-            is_undirected=self.is_undirected,
+            is_undirected=self.undirected,
         )
         edge_index = altered_data.edge_index
         self.to_dataset(base, edge_index, None)

@@ -3,7 +3,7 @@ import torch.nn.functional as F
 from torch.optim import Optimizer
 from torch_geometric.data import Data
 
-def train(self, model: torch.nn.Module, optimizer: Optimizer, data: Data):
+def train(model: torch.nn.Module, optimizer: Optimizer, data: Data):
     model.train()
     optimizer.zero_grad()
     logits = model(data)

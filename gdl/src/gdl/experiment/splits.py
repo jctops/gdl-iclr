@@ -1,8 +1,71 @@
+from math import ceil
 import numpy as np
+import random
 import torch
 from torch_geometric.data import Data
 
 from gdl.seeds import development_seed
+
+
+def set_train_val_test_split_classic(seed: int, data: Data, val_frac: float, test_frac: float):
+    random.seed(seed)
+    num_nodes = data.y.shape[0]
+
+    val_size = ceil(val_frac * num_nodes)
+    test_size = ceil(test_frac * num_nodes)
+    train_size = num_nodes - val_size - test_size
+
+    nodes = list(range(num_nodes))
+    random.shuffle(nodes)
+    train_idx = sorted(nodes[:train_size])
+    val_idx = sorted(nodes[train_size:train_size+val_size])
+    test_idx = sorted(nodes[train_size+val_size:])
+
+    def get_mask(idx):
+        mask = torch.zeros(num_nodes, dtype=torch.bool)
+        mask[idx] = 1
+        return mask
+
+    data.train_mask = get_mask(train_idx)
+    data.val_mask = get_mask(val_idx)
+    data.test_mask = get_mask(test_idx)
+
+    return data
+    
+
+def set_train_val_test_split_robust(seed: int, data: Data, val_frac: float, test_frac: float):
+    num_nodes = data.y.shape[0]
+
+    val_size = ceil(val_frac * num_nodes)
+    test_size = ceil(test_frac * num_nodes)
+    train_size = num_nodes - val_size - test_size
+
+    nodes = list(range(num_nodes))
+
+    # Take same test set every time using development seed for robustness
+    random.seed(development_seed)
+    random.shuffle(nodes)
+    test_idx = sorted(nodes[:test_size])
+    nodes = [x for x in nodes if x not in test_idx]
+
+    # Take train / val split according to seed
+    random.seed(seed)
+    random.shuffle(nodes)
+    train_idx = sorted(nodes[:train_size])
+    val_idx = sorted(nodes[train_size:])
+    
+    assert len(train_idx) + len(val_idx) + len(test_idx) == num_nodes
+
+    def get_mask(idx):
+        mask = torch.zeros(num_nodes, dtype=torch.bool)
+        mask[idx] = 1
+        return mask
+
+    data.train_mask = get_mask(train_idx)
+    data.val_mask = get_mask(val_idx)
+    data.test_mask = get_mask(test_idx)
+
+    return data
 
 
 def set_train_val_test_split(
