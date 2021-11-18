@@ -286,7 +286,7 @@ def main(opt):
                 opt["undirected"] = original_undirected_flag
             if opt["use_wandb"]:
                 opt["wandb"] = {
-                    "project": f'{opt["wandb_project"]} - {dataset}',
+                    "project": f'{opt["wandb_project"]}',
                     "log_config": True,
                     "group": f"{dataset}_{opt['preprocessing']}{'_undirected' if opt['undirected'] else ''}",
                 }
