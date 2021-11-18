@@ -17,7 +17,6 @@ from gdl.experiment.splits import set_train_val_test_split, set_train_val_test_s
 from gdl.models import GCN, GCN_FA
 from gdl.seeds import test_seeds
 
-
 def get_preprocessed_dataset(opt, data_dir):
     if (opt["preprocessing"] == "none") or (opt["preprocessing"] == "fa"):
         dataset = BaseDataset(
@@ -127,6 +126,8 @@ SMALL_DATASETS = [
     'Texas',
     'Wisconsin',
     'Chameleon',
+    'Squirrel',
+    'Actor',
 ]
 
 
