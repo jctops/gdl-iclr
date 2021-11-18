@@ -18,7 +18,7 @@ class GCN_FA(torch.nn.Module):
             layers.append(GCNConv(in_features, out_features))
         
         # Here's the +FA addition
-        layers.append(Linear(in_features, out_features))
+        layers.append(Linear(num_features[-2], num_features[-1]))
 
         self.layers = ModuleList(layers)
 
