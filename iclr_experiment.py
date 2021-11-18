@@ -13,15 +13,13 @@ import torch
 from gdl.data import BaseDataset, PPRDataset, SDRFDataset
 from gdl.experiment.node_classification import evaluate, train
 from gdl.experiment.optimizer import get_optimizer
-from gdl.experiment.splits import set_train_val_test_split_robust as set_train_val_test_split
-# from gdl.experiment.splits import set_train_val_test_split_classic as set_train_val_test_split
-# from gdl.experiment.splits import set_train_val_test_split
-from gdl.models import GCN
+from gdl.experiment.splits import set_train_val_test_split, set_train_val_test_split_frac
+from gdl.models import GCN, GCN_FA
 from gdl.seeds import test_seeds
 
 
 def get_preprocessed_dataset(opt, data_dir):
-    if opt["preprocessing"] == "none":
+    if (opt["preprocessing"] == "none") or (opt["preprocessing"] == "fa"):
         dataset = BaseDataset(
             name=opt["dataset"],
             use_lcc=opt["use_lcc"],
@@ -61,8 +59,10 @@ def set_search_space(opt):
     # opt["lr"] = tune.loguniform(0.005, 0.03)
     # opt["weight_decay"] = tune.loguniform(0.001, 0.2)
 
-    if opt["preprocessing"] == "none":
+    if (opt["preprocessing"] == "none"):
         pass
+    elif (opt["preprocessing"] == "fa"):
+        opt["fa"] = True
     elif opt["preprocessing"] == "ppr":
         opt["alpha"] = tune.loguniform(0.01, 0.12)
         opt["k"] = tune.choice([16, 32, 64])
@@ -77,11 +77,11 @@ def set_search_space(opt):
             opt["max_steps"] = tune.uniform(200, 2000)
         opt["remove_edges"] = True
         # Folded normal distribution for removal_bound
-        opt["removal_bound"] = tune.sample_from(
-            lambda _: abs(np.random.normal(0.5, 4))
-            if np.random.uniform(0, 1) < 0.85
-            else 0
-        )
+        opt["removal_bound"] = 1000#tune.sample_from(
+        #     lambda _: abs(np.random.normal(0.5, 4))
+        #     if np.random.uniform(0, 1) < 0.85
+        #     else 0
+        # )
 
     return opt
 
@@ -96,6 +96,39 @@ def get_test_results(models, datas):
 
 def loguniform(low, high, size=None):
     return np.exp(np.random.uniform(np.log(low), np.log(high), size))
+
+
+DATASET_TO_DEVELOPMENT_FRAC = {
+    'Cornell': 0.7,
+    'Wisconsin': 0.7,
+    'Texas': 0.7,
+    'Chameleon': 0.5,
+    'Squirrel': 0.5,
+    'Actor': 0.5,
+    'Cora': 0.5,
+    'Citeseer': 0.5,
+    'Pubmed': 0.5,
+}
+
+DATASET_TO_NUM_PER_CLASS = {
+    'Cornell': 5,
+    'Wisconsin': 5,
+    'Texas': 5,
+    'Chameleon': 20,
+    'Squirrel': 20,
+    'Actor': 20,
+    'Cora': 20,
+    'Citeseer': 20,
+    'Pubmed': 20,
+}
+
+SMALL_DATASETS = [
+    'Cornell',
+    'Texas',
+    'Wisconsin',
+    'Chameleon',
+]
+
 
 def train_ray(
     opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25, test=True
@@ -117,19 +150,34 @@ def train_ray(
             "hidden_units": np.random.choice([16, 32, 64, 128]),
             "dropout": np.random.uniform(0.2, 0.8),
             "lr": loguniform(0.005,0.03),
-            "weight_decay": loguniform(0.001, 0.2),
+            # "weight_decay": loguniform(0.001, 0.2) if opt["dataset"] not in SMALL_DATASETS else loguniform(0.001, 0.2)/10,
+            "weight_decay": loguniform(0.01, 0.5) if opt["dataset"] not in SMALL_DATASETS else loguniform(0.001, 0.2)/10,
         }
         for _ in range(opt["models_per_seed"])
     ]
 
     for seed in seeds:
-        dataset.data = set_train_val_test_split(
-            seed,
-            dataset.data,
-            # num_development=1500,
-            val_frac=0.2,
-            test_frac=0.2
-        ).to(device)
+        if opt["dataset"] in SMALL_DATASETS:
+            dataset.data = set_train_val_test_split_frac(
+                seed,
+                dataset.data,
+                val_frac=0.2,
+                test_frac=0.5
+            )
+        else:
+            dataset.data = set_train_val_test_split(
+                seed,
+                dataset.data,
+                development_frac=DATASET_TO_DEVELOPMENT_FRAC[opt["dataset"]],
+                num_per_class=DATASET_TO_NUM_PER_CLASS[opt["dataset"]],
+            ).to(device)
+        # dataset.data = set_train_val_test_split(
+        #     seed,
+        #     dataset.data,
+        #     # num_development=1500,
+        #     val_frac=0.2,
+        #     test_frac=0.2
+        # ).to(device)
         # datas.append(dataset.data)
 
         setups_by_seed[seed] = {
@@ -140,7 +188,8 @@ def train_ray(
 
         for i in range(opt["models_per_seed"]):
             model_config = model_configs[i]
-            model = GCN(
+            model_class = GCN_FA if opt.get("fa") else GCN
+            model = model_class(
                 dataset,
                 hidden=model_config["hidden_layers"] * [model_config["hidden_units"]],
                 dropout=model_config["dropout"],
@@ -214,6 +263,8 @@ def train_ray(
             hidden_layers=best_config["hidden_layers"],
             hidden_units=best_config["hidden_units"],
             dropout=best_config["dropout"],
+            lr=best_config["lr"],
+            weight_decay=best_config["weight_decay"],
         )
 
 
@@ -235,7 +286,7 @@ def main(opt):
                 opt["undirected"] = original_undirected_flag
             if opt["use_wandb"]:
                 opt["wandb"] = {
-                    "project": f'{opt["wandb_project"]} ({dataset})',
+                    "project": f'{opt["wandb_project"]} - {dataset}',
                     "log_config": True,
                     "group": f"{dataset}_{opt['preprocessing']}{'_undirected' if opt['undirected'] else ''}",
                 }
@@ -335,12 +386,12 @@ if __name__ == "__main__":
         help="Metric to sort the hyperparameter tuning runs on",
     )
     parser.add_argument("--use_lcc", dest="use_lcc", action="store_true")
+    parser.add_argument("--not_lcc", dest="use_lcc", action="store_false")
     parser.add_argument(
         "--use_wandb", dest="use_wandb", action="store_true", default=False
     )
     parser.add_argument("--wandb_project")
     parser.add_argument("--wandb_group")
-    parser.add_argument("--not_lcc", dest="use_lcc", action="store_false")
     parser.add_argument("--data_dir", dest="data_dir", default="~/data")
     parser.add_argument("--undirected", action="store_true", default=False)
     parser.add_argument("--models_per_seed", type=int)

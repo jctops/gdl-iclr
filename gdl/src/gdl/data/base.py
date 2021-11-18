@@ -186,4 +186,4 @@ class BaseDataset(InMemoryDataset):
         self.to_dataset(base, edge_index, edge_attr)
 
     def __str__(self) -> str:
-        return f"{self.name}_{'base' if not self.undirected else 'undirected'}"
+        return f"{self.name}_{'base' if not self.undirected else 'undirected'}_lcc={self.use_lcc}"
