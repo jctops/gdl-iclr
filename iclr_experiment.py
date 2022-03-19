@@ -64,24 +64,53 @@ def set_search_space(opt):
     elif (opt["preprocessing"] == "fa"):
         opt["fa"] = True
     elif opt["preprocessing"] == "ppr":
-        opt["alpha"] = tune.loguniform(0.01, 0.12)
-        opt["k"] = tune.choice([16, 32, 64])
-        opt["eps"] = tune.loguniform(0.0001, 0.001)
+        # opt["alpha"] = tune.loguniform(0.01, 0.12)
+        opt["alpha"] = tune.loguniform(0.03, 0.18)
+        # opt["alpha"] = tune.loguniform(0.02, 0.2)
+        opt["k"] = tune.choice([16, 32, 64, 128])
+        # opt["k"] = tune.choice([16, 32, 64, 128])
+        # opt["eps"] = tune.loguniform(0.0001, 0.001)
+        opt["eps"] = tune.loguniform(0.00005, 0.002)
         opt["use_k"] = tune.choice([True, False])
     elif opt["preprocessing"] == "sdrf":
-        if opt["dataset"] in ["Cornell", "Wisconsin", "Texas"]:
+        if opt["dataset"] in ["Cornell", "Texas"]:
             opt["tau"] = tune.loguniform(10, 200)
-            opt["max_steps"] = tune.uniform(20, 500)
+            opt["max_steps"] = tune.uniform(20, 100)
+        elif opt["dataset"] == "Wisconsin":
+            opt["tau"] = tune.loguniform(10, 200)
+            opt["max_steps"] = tune.uniform(20, 150)
+        elif opt["dataset"] == "Chameleon":
+            opt["tau"] = tune.loguniform(30,600)
+            opt["max_steps"] = tune.uniform(200,4000)
+        elif opt["dataset"] == "Squirrel":
+            opt["tau"] = tune.loguniform(30,600)
+            # opt["max_steps"] = tune.uniform(200,4000)
+            # opt["max_steps"] = tune.uniform(20,500)
+            opt["max_steps"] = tune.uniform(2000,10000)
+        elif opt["dataset"] == "Actor":
+            opt["tau"] = tune.loguniform(30,600)
+            opt["max_steps"] = tune.uniform(200,4000)
+        elif opt["dataset"] == "Cora":
+            opt["tau"] = tune.loguniform(30,600)
+            opt["max_steps"] = tune.uniform(30,300)
+        elif opt["dataset"] == "Citeseer":
+            opt["tau"] = tune.loguniform(30,600)
+            opt["max_steps"] = tune.uniform(30,120)
+        elif opt["dataset"] == "Pubmed":
+            opt["tau"] = tune.loguniform(30,600)
+            opt["max_steps"] = tune.uniform(100,2000)
         else:
             opt["tau"] = tune.loguniform(30, 600)
-            opt["max_steps"] = tune.uniform(200, 2000)
+            # opt["max_steps"] = tune.uniform(200, 2000)
+            opt["max_steps"] = tune.uniform(200, 3000)
         opt["remove_edges"] = True
         # Folded normal distribution for removal_bound
-        opt["removal_bound"] = 1000#tune.sample_from(
-        #     lambda _: abs(np.random.normal(0.5, 4))
-        #     if np.random.uniform(0, 1) < 0.85
-        #     else 0
-        # )
+        opt["removal_bound"] = tune.sample_from(
+            # lambda _: abs(np.random.normal(5, 5)) * 2
+            lambda _: abs(np.random.normal(0.5, 4)) * 5
+            if np.random.uniform(0, 1) < 0.85
+            else 0.5
+        )
 
     return opt
 
@@ -127,8 +156,16 @@ SMALL_DATASETS = [
     'Texas',
     'Wisconsin',
     'Chameleon',
+    'Squirrel',
+    'Actor',
 ]
 
+def update_best_results(val_accs, test_accs, best_val_accs, best_test_accs, N):
+    for i in range(N):
+        if val_accs[i] > best_val_accs[i]:
+            best_val_accs[i] = val_accs[i]
+            best_test_accs[i] = test_accs[i]
+    return best_val_accs, best_test_accs
 
 def train_ray(
     opt, checkpoint_dir=None, data_dir="../../digl/data", patience=25, test=True
@@ -146,12 +183,14 @@ def train_ray(
 
     model_configs = [
         {
+            # "hidden_layers": 1,
+            # "hidden_units": np.random.choice([64, 128]),
             "hidden_layers": np.random.choice(range(1, opt["max_layers"] + 1)),
             "hidden_units": np.random.choice([16, 32, 64, 128]),
             "dropout": np.random.uniform(0.2, 0.8),
             "lr": loguniform(0.005,0.03),
             # "weight_decay": loguniform(0.001, 0.2) if opt["dataset"] not in SMALL_DATASETS else loguniform(0.001, 0.2)/10,
-            "weight_decay": loguniform(0.01, 0.5) if opt["dataset"] not in SMALL_DATASETS else loguniform(0.001, 0.2)/10,
+            "weight_decay": loguniform(0.01, 0.5),# if opt["dataset"] not in SMALL_DATASETS else loguniform(0.001, 0.2)/10,
         }
         for _ in range(opt["models_per_seed"])
     ]
@@ -171,14 +210,6 @@ def train_ray(
                 development_frac=DATASET_TO_DEVELOPMENT_FRAC[opt["dataset"]],
                 num_per_class=DATASET_TO_NUM_PER_CLASS[opt["dataset"]],
             ).to(device)
-        # dataset.data = set_train_val_test_split(
-        #     seed,
-        #     dataset.data,
-        #     # num_development=1500,
-        #     val_frac=0.2,
-        #     test_frac=0.2
-        # ).to(device)
-        # datas.append(dataset.data)
 
         setups_by_seed[seed] = {
             "data": dataset.data,
@@ -216,6 +247,9 @@ def train_ray(
     best_test_ci = 0
     best_config = {}
 
+    best_val_accs_per_model = [[0 for _ in range(len(seeds))] for _ in range(opt["models_per_seed"])]
+    best_test_accs_per_model = [[0 for _ in range(len(seeds))] for _ in range(opt["models_per_seed"])]
+
     for epoch in range(1, opt["epoch"] + 1):
         for i in range(opt["models_per_seed"]):
             loss = np.mean(
@@ -232,6 +266,7 @@ def train_ray(
                 [setups_by_seed[seed]["models"][i] for seed in seeds],
                 [setups_by_seed[seed]["data"] for seed in seeds],
             )
+
             # print('Here!', test_accs, flush=True)
 
             # with tune.checkpoint_dir(step=epoch) as checkpoint_dir:
@@ -239,18 +274,32 @@ def train_ray(
             #     path = os.path.join(checkpoint_dir, "checkpoint")
             #     torch.save(([setups_by_seed[seed]['models'][i] for seed in seeds][best].state_dict(), [setups_by_seed[seed]['optimizers'][i] for seed in seeds][best].state_dict()), path)
 
-            val_acc_mean = np.mean(val_accs)
-            boots_series = sns.algorithms.bootstrap(
-                test_accs, func=np.mean, n_boot=1000
-            )
-            test_acc_mean = np.mean(test_accs)
-            test_acc_ci = np.max(np.abs(sns.utils.ci(boots_series, 95) - test_acc_mean))
+            # val_acc_mean = np.mean(val_accs)
+            # boots_series = sns.algorithms.bootstrap(
+            #     test_accs, func=np.mean, n_boot=1000
+            # )
+            # test_acc_mean = np.mean(test_accs)
+            # test_acc_ci = np.max(np.abs(sns.utils.ci(boots_series, 95) - test_acc_mean))
 
-            if val_acc_mean > best_val_acc:
-                best_val_acc = val_acc_mean
-                best_test_acc = test_acc_mean
-                best_test_ci = test_acc_ci
-                best_config = model_configs[i]
+            # if val_acc_mean > best_val_acc:
+            #     best_val_acc = val_acc_mean
+            #     best_test_acc = test_acc_mean
+            #     best_test_ci = test_acc_ci
+            #     best_config = model_configs[i]
+
+            best_val_accs_per_model[i], best_test_accs_per_model[i] = update_best_results(
+                val_accs, test_accs, best_val_accs_per_model[i], best_test_accs_per_model[i], len(seeds))
+
+        val_acc_mean_per_model = [np.mean(x) for x in best_val_accs_per_model]
+        best_model_ix = np.argmax(val_acc_mean_per_model)
+
+        best_val_acc = val_acc_mean_per_model[best_model_ix]
+        best_test_acc = np.mean(best_test_accs_per_model[best_model_ix])
+        boots_series = sns.algorithms.bootstrap(
+            best_test_accs_per_model[best_model_ix], func=np.mean, n_boot=1000
+        )
+        best_test_ci = np.max(np.abs(sns.utils.ci(boots_series, 95) - best_test_acc))
+        best_config = model_configs[best_model_ix]
 
         tune.report(
             loss=loss,
@@ -286,7 +335,8 @@ def main(opt):
                 opt["undirected"] = original_undirected_flag
             if opt["use_wandb"]:
                 opt["wandb"] = {
-                    "project": f'{opt["wandb_project"]} - {dataset}',
+                    "project": f'{opt["wandb_project"]}',
+                    # "project": f'{opt["wandb_project"]} - {dataset}',
                     "log_config": True,
                     "group": f"{dataset}_{opt['preprocessing']}{'_undirected' if opt['undirected'] else ''}",
                 }

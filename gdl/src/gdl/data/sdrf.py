@@ -133,7 +133,8 @@ class SDRFDataset(BaseDataset):
         super(SDRFDataset, self).init(data_dir)
 
     def process(self):
-        base = self.get_dataset()
+        # base = self.get_dataset()
+        base = BaseDataset(name=self.name, use_lcc=self.use_lcc, undirected=self.undirected, data_dir=self.data_dir)
         altered_data = sdrf_w_cuda(
             base.data,
             loops=self.max_steps,

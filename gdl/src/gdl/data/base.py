@@ -166,7 +166,7 @@ class BaseDataset(InMemoryDataset):
         """
         base = self.get_dataset()
 
-        if not self.undirected:
+        if self.undirected:
             adj_matrix = get_undirected_adj_matrix(base)
             edges_i = []
             edges_j = []
